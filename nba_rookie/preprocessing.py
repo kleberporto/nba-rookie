@@ -1,3 +1,4 @@
+from logging import Logger, info
 from pandas import DataFrame, Series
 from nba_rookie.env import (
     POSITION,
@@ -7,10 +8,17 @@ from nba_rookie.env import (
     INCHES_TO_METERS,
 )
 
+from nba_rookie.variable_selector import VariableSelector
+
 
 class Preprocessor:
+    def __init__(self, logger: Logger):
+        self.logger = logger
+        self.variable_selector = VariableSelector(logger)
+
     def transform(self, df: DataFrame) -> DataFrame:
         return_df = df.copy(deep=True)
+        return_df = self.variable_selector.select_used_variables(return_df)
         return_df = self._treat_position(return_df)
         return_df = self._treat_height(return_df)
         return return_df
@@ -29,10 +37,15 @@ class Preprocessor:
         Returns:
             DataFrame: The transformed pandas DataFrame
         """
-        df.dropna(subset=[POSITION])
-        df[HAS_SECOND_POSITION] = df[POSITION].str.len() > 1
-        df[POSITION] = df[POSITION].str[0:1]
-        return df
+        try:
+            df.dropna(subset=[POSITION])
+            df[HAS_SECOND_POSITION] = df[POSITION].str.len() > 1
+            df[POSITION] = df[POSITION].str[0:1]
+            self.logger.info(f"{POSITION}: processed")
+            return df
+        except KeyError:
+            self.logger.info(f"{POSITION} not in the variable list. Preprocessing step ignored")
+            return df
 
     def _feet_to_meters(self, feet: float) -> float:
         """
@@ -66,5 +79,9 @@ class Preprocessor:
         """
         Converts the height column from feet to meters
         """
-        df[HEIGHT] = df[HEIGHT].apply(lambda x: self.__convert_height_ft_to_m(x))
-        return df
+        try:
+            df[HEIGHT] = df[HEIGHT].apply(lambda x: self.__convert_height_ft_to_m(x))
+            self.logger.info(f"{HEIGHT}: processed")
+            return df
+        except KeyError:
+            self.logger.info(f"{HEIGHT} column not in the selected variable list. Ignoring prepocessing step.")
