@@ -1,3 +1,4 @@
+from logging import Logger
 from math import isclose
 from pandas import DataFrame
 from numpy import nan
@@ -5,7 +6,7 @@ from numpy import nan
 from nba_rookie.env import HEIGHT
 from nba_rookie.preprocessing import Preprocessor
 
-preprocessor = Preprocessor()
+preprocessor = Preprocessor(Logger(__name__))
 
 
 def test__treat_position():

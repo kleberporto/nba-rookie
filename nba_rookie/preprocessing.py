@@ -38,7 +38,7 @@ class Preprocessor:
             DataFrame: The transformed pandas DataFrame
         """
         try:
-            df.dropna(subset=[POSITION])
+            df.dropna(subset=[POSITION], inplace=True)
             df[HAS_SECOND_POSITION] = df[POSITION].str.len() > 1
             df[POSITION] = df[POSITION].str[0:1]
             self.logger.info(f"{POSITION}: processed")
